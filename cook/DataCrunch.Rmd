@@ -1,0 +1,28 @@
+---
+output: html_document
+---
+
+```{r}
+strInputDir <- "../gathered/"
+strOutputDir <- "../cooked/"
+```
+
+```{r}
+load(paste0(strInputDir, "DataCrunch.rda"))
+```
+
+
+```{r}
+save(file = paste0(strOutputDir, "DataCrunch.rda")
+     , dfFarmersMarket
+     , dfGroceryStore
+     , dfSNAP
+     , dfFoodBank
+     , dfFoodPantry
+     , dfBusStop
+     , dfSchoolInfo
+     , dfSchoolPerformance14
+     , dfSchoolPerformance15
+     , dfAgency
+     , dfAgencyClean)
+```

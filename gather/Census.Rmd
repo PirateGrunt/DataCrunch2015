@@ -1,0 +1,28 @@
+---
+output: html_document
+---
+
+Data comes from http://ncdata4good.github.io/DataCrunch2015/.
+
+```{r}
+strInputDir <- ""
+strOutputDir <- "../gathered/"
+```
+
+
+## ACS
+
+## Census tract shapefile
+
+## Shapefile for public school zoning
+
+```{r}
+strPublicSchoolZoning <- "ftp://ftp2.census.gov//geo/tiger/TIGER2015/UNSD/tl_2015_37_unsd.zip"
+```
+
+
+## 
+
+```{r}
+save(file = paste0(strOutputDir, "Census.rda"))
+```
