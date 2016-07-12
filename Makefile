@@ -1,70 +1,99 @@
 ####################
 # Makefile
-####################
 
-GATHER_DIR  = ./gather
-COOK_DIR = ./cook
-ANALYZE_DIR = ./analyze
-PUBLISH_DIR = ./publish
+ROOT_DIR = ./
 
-GATHER_SOURCE = $(wildcard ./gather/*.Rmd)
-GATHERED = $(GATHER_SOURCE:.Rmd=.html)
+GATHER_DIR = $(ROOT_DIR)gather/
+GATHERED_DIR = $(ROOT_DIR)gathered/
+GATHER_SOURCE = $(wildcard $(GATHER_DIR)*.Rmd)
+GATHERED = $(patsubst $(GATHER_DIR)%.Rmd, $(GATHERED_DIR)%.rda, $(GATHER_SOURCE))
 
-COOK_SOURCE = $(wildcard ./cook/*.Rmd)
-COOKED = $(COOK_SOURCE:.Rmd=.html)
+COOK_DIR = $(ROOT_DIR)cook/
+COOKED_DIR = $(ROOT_DIR)cooked/
+COOK_SOURCE = $(wildcard $(COOK_DIR)*.Rmd)
+COOKED = $(patsubst $(COOK_DIR)%.Rmd, $(COOKED_DIR)%.rda, $(COOK_SOURCE))
 
-ANALYZE_SOURCE = $(wildcard ./analyze/*.Rmd)
-ANALYZED = $(ANALYZE_SOURCE:.Rmd=.html)
+ANALYZE_DIR = $(ROOT_DIR)analyze/
+ANALYZED_DIR = $(ROOT_DIR)analyzed/
+ANALYZE_SOURCE = $(wildcard $(ANALYZE_DIR)*.Rmd)
+ANALYZED = $(patsubst $(ANALYZE_DIR)%.Rmd, $(ANALYZED_DIR)%.rda, $(ANALYZE_SOURCE))
 
-PUBLISH_SOURCE = $(wildcard ./publish/*.Rmd)
-PUBLISHED = $(PUBLISH_SOURCE:.Rmd=.html)
+PRESENT_DIR = $(ROOT_DIR)present/
+PRESENTED_DIR = $(ROOT_DIR)presented/
+PRESENT_SOURCE = $(wildcard $(PRESENT_DIR)*.Rmd)
+PRESENTED = $(patsubst $(PRESENT_DIR)%.Rmd, $(PRESENTED_DIR)%.rda, $(PRESENT_SOURCE))
 
-KNIT = Rscript -e "require(rmarkdown); render('$<')"
-PUBLISH = Rscript -e "require(rmarkdown); render('$<', output_dir = '../published')"
+KNIT = Rscript -e "rmarkdown::render('$<')"
+GATHER = Rscript -e "rmarkdown::render('$(<:.sql=.Rmd)', output_dir = '$(GATHERED_DIR)')"
+COOK = Rscript -e "rmarkdown::render('$<', output_dir = '$(COOKED_DIR)')"
+ANALYZE = Rscript -e "rmarkdown::render('$<', output_dir = '$(ANALYZED_DIR)')"
+PRESENT = Rscript -e "rmarkdown::render('$<', output_dir = '$(PRESENTED_DIR)')"
 
-#########################
-## Build recipes
-#########################
+#///////////////////////////////////////////////////
+## M A I N   R E C I P E
+all: $(GATHERED) $(COOKED) $(ANALYZED) $(PRESENTED)
 
-all: $(GATHERED) $(COOKED) $(ANALYZED) $(PUBLISHED)
+## End Main recipe
+##==================================================
 
-cooked: $(COOKED) $(ANALYZED) $(PUBLISHED)
+#///////////////////////////////////////////////////
+## O N L Y  C O O K
+no_gather: $(COOKED) $(ANALYZED) $(PRESENTED)
 
-#########################
-## Gather
-#########################
+## End no_gather
+##==================================================
 
-$(GATHER_DIR)/%.html:$(GATHER_DIR)/%.Rmd
-	$(KNIT)
+#///////////////////////////////////////////////////
+## G A T H E R
+$(GATHER_DIR)%.Rmd:$(GATHER_DIR)%.sql
+	@echo =============================================
+	@echo == SQL updated for $(@:.Rmd=.)
+	@echo =============================================
+	touch $@
 
-#########################
-# Cook
-#########################
+$(GATHERED_DIR)%.rda:$(GATHER_DIR)%.Rmd
+	@echo =============================================
+	@echo == Working on $(<:.Rmd=.)
+	@echo =============================================
+	$(GATHER)
 
-$(COOK_DIR)/%.html:$(COOK_DIR)/%.Rmd $(GATHER_OUT)
-	$(KNIT)
+## End Gather
+##==================================================
 
-#########################
-# Analyze
-#########################
+#///////////////////////////////////////////////////
+# C O O K
+$(COOKED_DIR)%.rda:$(COOK_DIR)%.Rmd $(GATHERED)
+	@echo =============================================
+	@echo == Working on $(<:.Rmd=.)
+	@echo =============================================
+	$(COOK)
 
-$(ANALYZE_DIR)/%.html:$(ANALYZE_DIR)/%.Rmd $(COOK_OUT)
-	$(KNIT)
+## End Cook
+##==================================================
 
-#########################
-# Publish
-#########################
+#///////////////////////////////////////////////////
+## A N A L Y Z E
+$(ANALYZED_DIR)%.rda:$(ANALYZE_DIR)%.Rmd $(COOKED)
+	@echo =============================================
+	@echo == Analyze $(<:.Rmd=)
+	@echo =============================================
+	$(ANALYZE)
 
-$(PUBLISH_DIR)/%.html:$(PUBLISH_DIR)/%.Rmd $(ANALYZE_OUT)
-	$(PUBLISH)
+## End Anaylze
+##==================================================
+
+#///////////////////////////////////////////////////
+## P R E S E N T
+$(PRESENTED_DIR)%.rda:$(PRESENT_DIR)%.Rmd $(ANALYZED)
+	@echo =============================================
+	@echo == Working on $(<:.Rmd=)
+	@echo =============================================
+	$(PRESENT)
+
+## End Present
+##==================================================
 
 clean:
-	rm -fv $(GATHERED)
-	rm -fv $(COOKED)
-	rm -fv $(ANALYZED)
-	rm -fv $(PUBLISHED)
-
-cleanCooked:
-	rm -fv $(COOKED)
-	rm -fv $(ANALYZED)
-	rm -fv $(PUBLISHED)
+	rm -fv $(COOKED_DIR)/*
+	rm -fv $(ANALYZED_DIR)/*
+	rm -fv $(PRESENTED_DIR)/*
